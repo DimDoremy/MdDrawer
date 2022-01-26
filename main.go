@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/DimDoremy/MdDrawer/common"
+	"github.com/DimDoremy/MdDrawer/controller"
 	"github.com/kataras/iris/v12"
 )
 
@@ -24,8 +25,8 @@ func main() {
 	{
 		drawsAPI.Use(iris.Compression) // 使用Compression中间件，进行404等的处理
 
-		drawsAPI.Get(common.Kconf.String("Router.Index"), func(ctx iris.Context) {}) // 主页访问
-		drawsAPI.Post("/sweepstake", func(ctx iris.Context) {})                      // 抽奖
+		drawsAPI.Get(common.Kconf.String("Router.Index"), controller.GetAllTexts) // 主页访问
+		drawsAPI.Post("/sweepstake", func(ctx iris.Context) {})                   // 抽奖
 	}
 
 	port := common.Kconf.Int("Web.Port")

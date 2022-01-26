@@ -8,62 +8,102 @@ import (
 	"github.com/DimDoremy/MdDrawer/dto"
 )
 
-type void struct{}
-
-var member void
-
-func GetAllRares() []dto.Rares {
+func GetAllRares() ([]dto.Rares, error) {
 	rares := make([]dto.Rares, 0)
 	err := common.Engine.Find(&rares)
 	if err != nil {
-		common.Logger.Error("Engine load failed", common.ErrPacker(err))
+		common.Logger.Warn("Engine load failed", common.ErrPacker(err))
+		return nil, err
 	}
-	return rares
+	return rares, nil
 }
 
-func GetRaresByWhere(where string, args ...interface{}) []dto.Rares {
+func GetRaresByWhere(where string, args ...interface{}) ([]dto.Rares, error) {
 	rares := make([]dto.Rares, 0)
 	err := common.Engine.Where(where, args...).Find(&rares)
 	if err != nil {
-		common.Logger.Error("Engine load failed", common.ErrPacker(err))
+		common.Logger.Warn("Engine load failed", common.ErrPacker(err))
+		return nil, err
 	}
-	return rares
+	return rares, nil
 }
 
-//私有：随机获取1张
-func getRandomCard(nid uint32) int64 {
-	rand.Seed(time.Now().UnixNano() + int64(nid))
-	sql := "SELECT * FROM Rares WHERE rare = ?"
-	percent := rand.Intn(100) + 1
+func GetRandomPack10(nid uint32, flag bool) (map[int]map[int64]int, bool) {
+	packs := make(map[int]map[int64]int)
+	mrc := make(map[int]int)
+	mrc[1], mrc[2], mrc[3], mrc[4] = 0, 0, 0, 0
+	for i := 0; len(packs) < 10 && i < 100; i++ {
+		pack := GetRandomPack(nid)
+		mr := getPackMaxRare(pack)
+		for k, v := range mr {
+			mrc[k] += v
+		}
+		packs[i+1] = pack
+		for len(packs) == 9 && mrc[1] == 0 && mrc[2] == 0 {
+			pack = GetRandomPack(nid)
+			mr = getPackMaxRare(pack)
+			if mr[1] == 0 && mr[2] == 0 {
+				continue
+			} else if flag && mr[1] > 0 {
+				for k, v := range mr {
+					mrc[k] += v
+				}
+				packs[i+2] = pack
+				break
+			} else if !flag {
+				for k, v := range mr {
+					mrc[k] += v
+				}
+				packs[i+2] = pack
+				break
+			}
+		}
+	}
+	flag = mrc[1] == 0 && mrc[2] == 1
+	return packs, flag
+}
+
+func GetRandomPack(nid uint32) map[int64]int {
+	pack := make(map[int64]int)
+	for i := 0; len(pack) < common.CNumber && i < 100; i++ {
+		rand.Seed(time.Now().UnixNano() + int64(nid) + int64(i))
+		percent := rand.Intn(100) + 1
+		where := "rare = ?"
+		var rare *dto.Rares
+		switch {
+		case percent < common.UltimateRare:
+			rare = getRandomCard(where, 1)
+		case percent < common.SpecialRare+common.UltimateRare:
+			rare = getRandomCard(where, 2)
+		case percent < common.Rare+common.SpecialRare+common.UltimateRare:
+			rare = getRandomCard(where, 3)
+		default:
+			rare = getRandomCard(where, 4)
+		}
+		pack[rare.Id] = rare.Rare
+	}
+	return pack
+}
+
+func getRandomCard(where string, args ...interface{}) *dto.Rares {
 	rare := new(dto.Rares)
-	switch {
-	case percent < common.UltimateRare:
-		_, err := common.Engine.SQL(sql, 1).Get(rare)
-		if err != nil {
-			common.Logger.Error("Engine load failed", common.ErrPacker(err))
-		}
-	case percent < common.SpecialRare+common.UltimateRare:
-		_, err := common.Engine.SQL(sql, 2).Get(rare)
-		if err != nil {
-			common.Logger.Error("Engine load failed", common.ErrPacker(err))
-		}
-	case percent < common.Rare+common.SpecialRare+common.UltimateRare:
-		_, err := common.Engine.SQL(sql, 3).Get(rare)
-		if err != nil {
-			common.Logger.Error("Engine load failed", common.ErrPacker(err))
-		}
-	default:
-		_, err := common.Engine.SQL(sql, 4).Get(rare)
-		if err != nil {
-			common.Logger.Error("Engine load failed", common.ErrPacker(err))
-		}
+	count, err := common.Engine.Where(where, args...).Count(rare)
+	if err != nil {
+		common.Logger.Warn("Engine load failed", common.ErrPacker(err))
 	}
-	return rare.Id
+	offset := int(rand.Int63n(count) + 1)
+	_, err = common.Engine.Where(where, args...).Limit(1, offset).Get(rare)
+	if err != nil {
+		common.Logger.Warn("Engine load failed", common.ErrPacker(err))
+	}
+	return rare
 }
 
-func GetRandomPack(nid uint32) []int64 {
-	pack := map[int64]void{}
-	for {
-		// pack[]
+func getPackMaxRare(pack map[int64]int) map[int]int {
+	rare := make(map[int]int)
+	rare[1], rare[2], rare[3], rare[4] = 0, 0, 0, 0
+	for _, v := range pack {
+		rare[v] += 1
 	}
+	return rare
 }
