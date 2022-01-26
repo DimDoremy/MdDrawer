@@ -1,0 +1,17 @@
+[SQL]
+Driver = "sqlite3"
+ConnString = "./assets/cards.db"
+
+[Web]
+Port = 8080
+
+[Router]
+Root = "/draws"
+Index = "/"
+
+[Percent]
+UR = 5
+SR = 15
+R = 25
+N = 55
+CardNumbers = 8
