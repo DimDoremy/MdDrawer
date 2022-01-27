@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+
 	"github.com/DimDoremy/MdDrawer/bll"
 	"github.com/DimDoremy/MdDrawer/dto"
 	"github.com/kataras/iris/v12"
@@ -8,7 +10,11 @@ import (
 
 func GetAllRares(ctx iris.Context) {
 	bllreader := bll.GetAllRares()
-	ctx.JSON(bllreader)
+	data, err := json.Marshal(bllreader)
+	if err != nil {
+		ctx.StopWithError(400, err)
+	}
+	ctx.Binary(data)
 }
 
 func PostRaresByWhere(ctx iris.Context) {
@@ -19,5 +25,9 @@ func PostRaresByWhere(ctx iris.Context) {
 	}
 	req := ctx.FormValues()
 	bllreader = bll.GetRaresByWhere(req["column"][0], req["args"])
-	ctx.JSON(bllreader)
+	data, err := json.Marshal(bllreader)
+	if err != nil {
+		ctx.StopWithError(400, err)
+	}
+	ctx.Binary(data)
 }

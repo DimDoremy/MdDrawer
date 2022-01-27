@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+
 	"github.com/DimDoremy/MdDrawer/bll"
 	"github.com/DimDoremy/MdDrawer/dto"
 	"github.com/kataras/iris/v12"
@@ -8,7 +10,11 @@ import (
 
 func GetAllDatas(ctx iris.Context) {
 	bllreader := bll.GetAllDatas()
-	ctx.JSON(bllreader)
+	data, err := json.Marshal(bllreader)
+	if err != nil {
+		ctx.StopWithError(400, err)
+	}
+	ctx.Binary(data)
 }
 
 func PostDatasByWhere(ctx iris.Context) {
@@ -19,5 +25,9 @@ func PostDatasByWhere(ctx iris.Context) {
 	}
 	req := ctx.FormValues()
 	bllreader = bll.GetDatasByWhere(req["column"][0], req["args"])
-	ctx.JSON(bllreader)
+	data, err := json.Marshal(bllreader)
+	if err != nil {
+		ctx.StopWithError(400, err)
+	}
+	ctx.Binary(data)
 }

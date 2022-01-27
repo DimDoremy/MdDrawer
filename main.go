@@ -20,10 +20,13 @@ func main() {
 	{
 		drawsAPI.Use(iris.Compression) // 使用Compression中间件，进行404等的处理
 
-		drawsAPI.Get("/GetAllTexts", controller.GetAllTexts) // 主页访问
+		drawsAPI.Get("/GetAllTexts", controller.GetAllTexts)
 		drawsAPI.Get("/GetAllDatas", controller.GetAllDatas)
 		drawsAPI.Get("/GetAllRares", controller.GetAllRares)
-		drawsAPI.Post("/sweepstake", controller.PostTextsByWhere) // 抽奖
+		drawsAPI.Post("/PostTextsByWhere", controller.PostTextsByWhere)
+		drawsAPI.Post("/PostDatasByWhere", controller.PostDatasByWhere)
+		drawsAPI.Post("/PostRaresByWhere", controller.PostRaresByWhere)
+		drawsAPI.Post("/sweepstake", func(ctx iris.Context) {}) // 抽奖
 	}
 
 	port := common.Kconf.Int("Web.Port")
