@@ -8,6 +8,8 @@ Port = 8080
 [Router]
 Root = "/draws"
 Index = "/"
+Build = "/Build"
+TemplateData = "/TemplateData"
 
 [Percent]
 UR = 5
